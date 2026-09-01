@@ -1,0 +1,18 @@
+# 내보낸 프로젝트 데이터 — 실제 클라이언트·일정 정보가 들어 있으므로 커밋 금지
+프로젝트일정_*.json
+*.backup.json
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# 편집기
+.vscode/
+.idea/
+*.swp
+*~
+
+# 도구
+node_modules/
+.claude/

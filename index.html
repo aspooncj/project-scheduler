@@ -1,0 +1,1014 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>프로젝트 일정 관리</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --line:#e3e6ea; --ink:#1b1f24; --muted:#6b7280;
+    --accent:#2f5fd0; --accent-soft:#eaf0fd;
+    --red:#d92b2b; --red-soft:#fdecec;
+    --amber:#b26a00; --amber-soft:#fdf3e2;
+    --green:#1f7a4d; --green-soft:#e8f6ef;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,-apple-system,sans-serif;
+    font-size:14px;line-height:1.55}
+  button,input,select,textarea{font:inherit;color:inherit}
+  a{color:var(--accent)}
+
+  header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  .hwrap{max-width:1120px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .brand{font-weight:700;font-size:16px;margin-right:4px}
+  nav{display:flex;gap:4px}
+  nav button{background:none;border:0;padding:7px 14px;border-radius:8px;cursor:pointer;color:var(--muted);font-weight:600}
+  nav button.on{background:var(--accent-soft);color:var(--accent)}
+  .spacer{flex:1}
+
+  main{max-width:1120px;margin:0 auto;padding:22px 20px 80px}
+  .btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 15px;cursor:pointer;font-weight:600}
+  .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .btn.sm{padding:5px 10px;font-size:12.5px;font-weight:600}
+  .btn.danger{background:#fff;color:var(--red);border:1px solid #f0c9c9}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:14px}
+  .card h2{margin:0 0 4px;font-size:16px}
+  .card h3{margin:0 0 10px;font-size:14px;color:var(--muted);font-weight:700}
+  .sub{color:var(--muted);font-size:12.5px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .grow{flex:1;min-width:0}
+
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+  .p-red{background:var(--red-soft);color:var(--red)}
+  .p-amber{background:var(--amber-soft);color:var(--amber)}
+  .p-green{background:var(--green-soft);color:var(--green)}
+  .p-gray{background:#eef0f3;color:var(--muted)}
+  .p-blue{background:var(--accent-soft);color:var(--accent)}
+
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+  th{font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap}
+  .scroll{overflow-x:auto}
+  input[type=text],input[type=date],input[type=number],input[type=password],select,textarea{
+    border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff;max-width:100%}
+  input[type=date]{min-width:132px}
+  input[disabled]{background:#f4f5f7;color:var(--muted)}
+  textarea{width:100%;resize:vertical}
+  label.f{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:4px}
+  .field{margin-bottom:12px}
+
+  .warn{border-left:3px solid var(--red);background:var(--red-soft);color:#7d1d1d;
+    padding:8px 12px;border-radius:6px;margin:8px 0;font-size:13px}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);color:#1e3f8f;
+    padding:8px 12px;border-radius:6px;margin:8px 0;font-size:13px}
+
+  .empty{text-align:center;color:var(--muted);padding:44px 10px}
+
+  .dl{border:1px solid var(--line);border-radius:8px;margin-bottom:12px;overflow:hidden}
+  .dl-head{background:#fafbfc;padding:8px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+  .dl-head strong{font-size:13.5px}
+  .stagerow.past td{background:#fff8f8}
+  .stagerow.anchor td{background:var(--accent-soft)}
+
+  .modal{position:fixed;inset:0;background:rgba(20,24,30,.45);display:flex;align-items:flex-start;
+    justify-content:center;padding:40px 16px;overflow:auto;z-index:50}
+  .modal .card{max-width:860px;width:100%;margin:0}
+  .modal.hidden{display:none}
+  code{background:#eef0f3;padding:1px 5px;border-radius:4px;font-size:12.5px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hwrap">
+    <div class="brand">프로젝트 일정 관리</div>
+    <nav>
+      <button data-tab="home" class="on">홈</button>
+      <button data-tab="projects">프로젝트</button>
+      <button data-tab="settings">설정</button>
+    </nav>
+    <div class="spacer"></div>
+    <button class="btn" id="openInput">＋ 텍스트로 프로젝트 넣기</button>
+  </div>
+</header>
+
+<main>
+  <section id="tab-home"></section>
+  <section id="tab-projects" hidden></section>
+  <section id="tab-settings" hidden></section>
+</main>
+
+<div class="modal hidden" id="inputModal">
+  <div class="card">
+    <h2>텍스트로 프로젝트 넣기</h2>
+    <p class="sub">자유롭게 적어도 되고, 아래 양식으로 적어도 됩니다. 분석 결과를 확인한 뒤 확정합니다.</p>
+
+    <div class="field">
+      <textarea id="rawText" rows="9" placeholder="예) 10월 15일 청주 문화의달 개막행사. 현수막이랑 리플렛 제작하고 홍보영상 1편.
+11월 3일 옥천 군민의날 행사, 무대 운영이랑 포스터.
+12월 초 지역상권 SNS 캠페인 (클라이언트: 상인회)"></textarea>
+    </div>
+
+    <div class="note">
+      양식으로 넣을 때: <code>프로젝트명 | 유형 | 행사일 | 산출물, 산출물</code><br>
+      예: <code>청주 문화의달 | 문화기획 | 2026-10-15 | 현수막, 리플렛, 홍보영상</code>
+    </div>
+
+    <div class="row">
+      <button class="btn" id="parseAI">AI로 분석</button>
+      <button class="btn ghost" id="parseRule">양식으로 분석</button>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="closeInput">닫기</button>
+    </div>
+    <div id="parseStatus"></div>
+    <div id="parseResult"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ────────────────────────────── 날짜 · 영업일 ────────────────────────────── */
+
+// 국가 공휴일(대체공휴일 포함). 매년 갱신 필요 — 설정에서 회사 휴무일을 추가할 수 있습니다.
+const NATIONAL_HOLIDAYS = [
+  // 2026
+  "2026-01-01",                                                   // 신정
+  "2026-02-16","2026-02-17","2026-02-18",                         // 설날 연휴
+  "2026-03-01","2026-03-02",                                      // 삼일절 + 대체
+  "2026-05-05",                                                   // 어린이날
+  "2026-05-24","2026-05-25",                                      // 부처님오신날 + 대체
+  "2026-06-03",                                                   // 전국동시지방선거
+  "2026-06-06",                                                   // 현충일
+  "2026-08-15","2026-08-17",                                      // 광복절 + 대체
+  "2026-09-24","2026-09-25","2026-09-26","2026-09-28",            // 추석 연휴 + 대체
+  "2026-10-03","2026-10-05",                                      // 개천절 + 대체
+  "2026-10-09",                                                   // 한글날
+  "2026-12-25",                                                   // 성탄절
+  // 2027
+  "2027-01-01",
+  "2027-02-06","2027-02-07","2027-02-08","2027-02-09","2027-02-10",
+  "2027-03-01",
+  "2027-05-05",
+  "2027-05-13",
+  "2027-06-06",
+  "2027-08-15","2027-08-16",
+  "2027-09-14","2027-09-15","2027-09-16",
+  "2027-10-03","2027-10-04",
+  "2027-10-09","2027-10-11",
+  "2027-12-25","2027-12-27"
+];
+
+const DAY_MS = 86400000;
+
+function toDate(s){ const [y,m,d] = s.split("-").map(Number); return new Date(Date.UTC(y,m-1,d)); }
+function toStr(dt){
+  return dt.getUTCFullYear() + "-" +
+    String(dt.getUTCMonth()+1).padStart(2,"0") + "-" +
+    String(dt.getUTCDate()).padStart(2,"0");
+}
+function shift(s,n){ return toStr(new Date(toDate(s).getTime() + n*DAY_MS)); }
+function todayStr(){
+  const n = new Date();
+  return toStr(new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate())));
+}
+function weekdayKo(s){ return ["일","월","화","수","목","금","토"][toDate(s).getUTCDay()]; }
+function fmt(s){ return s ? s.slice(5).replace("-","/") + "(" + weekdayKo(s) + ")" : "—"; }
+function diffDays(a,b){ return Math.round((toDate(b) - toDate(a)) / DAY_MS); }
+
+let HOLIDAY_SET = new Set();
+function rebuildHolidays(){
+  HOLIDAY_SET = new Set(NATIONAL_HOLIDAYS.concat(state.settings.customHolidays || []));
+}
+function isBiz(s){
+  const w = toDate(s).getUTCDay();
+  return w !== 0 && w !== 6 && !HOLIDAY_SET.has(s);
+}
+function fwd(s){ let d = s; let g = 0; while(!isBiz(d) && g++ < 400) d = shift(d,1); return d; }
+function back(s){ let d = s; let g = 0; while(!isBiz(d) && g++ < 400) d = shift(d,-1); return d; }
+function nextBiz(s){ return fwd(shift(s,1)); }
+function prevBiz(s){ return back(shift(s,-1)); }
+/** s(영업일 기준)에서 n 영업일 뒤. n=0이면 s 자신(영업일로 보정). */
+function addBiz(s,n){ let d = fwd(s); for(let i=0;i<n;i++) d = nextBiz(d); return d; }
+function subBiz(s,n){ let d = back(s); for(let i=0;i<n;i++) d = prevBiz(d); return d; }
+/** a 다음날부터 b까지의 영업일 수. b가 a보다 이르면 음수. */
+function bizBetween(a,b){
+  if(a === b) return 0;
+  const sign = diffDays(a,b) > 0 ? 1 : -1;
+  let d = a, n = 0, g = 0;
+  while(d !== b && g++ < 3000){ d = shift(d, sign); if(isBiz(d)) n++; }
+  return n * sign;
+}
+
+/* ────────────────────────────── 표준 공정 템플릿 ────────────────────────────── */
+
+const TEMPLATES = {
+  print: { label:"인쇄물", stages:[
+    ["기획/카피",2],["1차 시안",3],["내부 검수",1],["클라이언트 컨펌",2],
+    ["수정",2],["최종 검수",1,true],["인쇄 발주",5],["납품",1]]},
+  video: { label:"영상", stages:[
+    ["기획/콘티",3],["촬영",2],["편집 1차",4],["검수",1],
+    ["수정",2],["최종본 확정",1,true],["업로드",1]]},
+  ad: { label:"온라인/SNS 광고", stages:[
+    ["전략 수립",2],["소재 제작",3],["내부 검수",1],["클라이언트 컨펌",2],
+    ["수정",1],["최종 검수",1,true],["매체 세팅",2],["집행 시작",1]]},
+  event: { label:"행사 운영", stages:[
+    ["기획안",3],["견적/발주",3],["협력사 확정",2],["리허설 준비",2],
+    ["최종 점검",1,true],["현장 셋업",2],["행사 진행",1]]}
+};
+
+const PROJECT_TYPES = ["문화기획","지역행사","마케팅 캠페인"];
+const TYPE_DEFAULT_KINDS = {
+  "문화기획": ["event","print"],
+  "지역행사": ["event","print"],
+  "마케팅 캠페인": ["ad","video"]
+};
+
+function guessKind(name){
+  const n = (name||"").toLowerCase();
+  if(/영상|비디오|촬영|유튜브|릴스|모션|video/.test(n)) return "video";
+  if(/현수막|리플렛|리플릿|포스터|책자|브로슈어|인쇄|배너|전단|팜플렛|자료집|print/.test(n)) return "print";
+  if(/sns|인스타|광고|캠페인|퍼포먼스|검색|매체|바이럴|블로그/.test(n)) return "ad";
+  if(/운영|무대|행사|부스|의전|진행|셋업|설치/.test(n)) return "event";
+  return "print";
+}
+
+function uid(){ return Math.random().toString(36).slice(2,10); }
+
+function makeStages(kind){
+  const t = TEMPLATES[kind] || TEMPLATES.print;
+  const custom = state.settings.stageDays[kind] || {};
+  return t.stages.map(([name, days, anchor]) => ({
+    id: uid(), name,
+    days: custom[name] != null ? custom[name] : days,
+    isAnchor: !!anchor,
+    start:null, end:null, locked:false, note:""
+  }));
+}
+function makeDeliverable(name, kind){
+  return { id: uid(), name: name || TEMPLATES[kind].label, kind, stages: makeStages(kind) };
+}
+/** 공정 체인이 끝나야 하는 날 = 행사일 − 완료 버퍼(영업일) */
+function chainEndOf(p){
+  return subBiz(p.eventDate, Math.max(0, p.bufferDays || 0));
+}
+/** 산출물의 최종 검수일 = 앵커(최종 검수) 단계의 종료일 */
+function reviewDateOf(dl){
+  const a = dl.stages.find(s => s.isAnchor) || dl.stages[dl.stages.length-1];
+  return a ? a.end : null;
+}
+/** 프로젝트의 최종 검수일 = 산출물 검수일 중 가장 늦은 날(행사 직전 마지막 관문) */
+function projectReviewDate(p){
+  let latest = null;
+  p.deliverables.forEach(dl => {
+    const d = reviewDateOf(dl);
+    if(d && (!latest || diffDays(latest, d) > 0)) latest = d;
+  });
+  return latest;
+}
+
+/* ────────────────────────────── 상태 ────────────────────────────── */
+
+const STORE_KEY = "adSched.v1";
+const DEFAULT_STATE = {
+  projects: [],
+  settings: {
+    apiKey: "",
+    model: "claude-opus-5",
+    defaultBuffer: 0,
+    customHolidays: [],
+    stageDays: {}
+  }
+};
+
+let state = load();
+let ui = { tab:"home", openProject:null, homeFilter:"review", pending:null };
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return structuredClone(DEFAULT_STATE);
+    const s = JSON.parse(raw);
+    s.settings = Object.assign(structuredClone(DEFAULT_STATE.settings), s.settings || {});
+    s.projects = s.projects || [];
+    return s;
+  }catch(e){
+    console.warn("저장된 데이터를 읽지 못했습니다.", e);
+    return structuredClone(DEFAULT_STATE);
+  }
+}
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  catch(e){ alert("브라우저 저장에 실패했습니다: " + e.message); }
+}
+
+/* ────────────────────────────── 일정 계산 ────────────────────────────── */
+
+/**
+ * 산출물의 공정 체인을 계산합니다.
+ * 기준점: 체인의 마지막 단계(납품/업로드/행사 진행)가 행사일에 끝나도록 전체를 역산합니다.
+ * 사용자가 잠근 단계가 있으면 그 날짜도 고정점이 됩니다.
+ * 고정점 이전은 역산, 이후는 순산, 고정점 사이는 앞에서부터 순산합니다.
+ * 최종 검수일은 이 역산의 결과로 산출물마다 자연스럽게 정해집니다.
+ */
+function scheduleDeliverable(project, dl){
+  const st = dl.stages;
+  if(!st.length) return;
+  const out = st.map(() => ({start:null, end:null}));
+  const fixed = [];
+
+  st.forEach((s,i) => {
+    if(s.locked && s.end){
+      out[i].end = s.end;
+      out[i].start = subBiz(s.end, Math.max(0, s.days - 1));
+      fixed.push(i);
+    }
+  });
+
+  const last = st.length - 1;
+  if(!fixed.includes(last)){
+    out[last].end = chainEndOf(project);
+    out[last].start = subBiz(out[last].end, Math.max(0, st[last].days - 1));
+    fixed.push(last);
+  }
+  fixed.sort((a,b) => a-b);
+
+  // 첫 고정점 앞: 역산
+  for(let i = fixed[0]-1; i >= 0; i--){
+    out[i].end = prevBiz(out[i+1].start);
+    out[i].start = subBiz(out[i].end, Math.max(0, st[i].days - 1));
+  }
+  // 마지막 고정점 뒤: 순산
+  for(let i = fixed[fixed.length-1]+1; i < st.length; i++){
+    out[i].start = nextBiz(out[i-1].end);
+    out[i].end = addBiz(out[i].start, Math.max(0, st[i].days - 1));
+  }
+  // 고정점 사이: 앞에서부터 순산
+  for(let k = 0; k < fixed.length-1; k++){
+    for(let i = fixed[k]+1; i < fixed[k+1]; i++){
+      out[i].start = nextBiz(out[i-1].end);
+      out[i].end = addBiz(out[i].start, Math.max(0, st[i].days - 1));
+    }
+  }
+
+  st.forEach((s,i) => { s.start = out[i].start; s.end = out[i].end; });
+}
+
+function scheduleProject(p){
+  if(p.bufferDays == null) p.bufferDays = state.settings.defaultBuffer || 0;
+  p.deliverables.forEach(dl => scheduleDeliverable(p, dl));
+}
+function scheduleAll(){ state.projects.forEach(scheduleProject); }
+
+/** 프로젝트의 경고 목록 */
+function warningsFor(p){
+  const w = [];
+  const t = todayStr();
+  let earliest = null, latest = null;
+  p.deliverables.forEach(dl => dl.stages.forEach(s => {
+    if(s.start && (!earliest || diffDays(s.start, earliest) > 0)) earliest = s.start;
+    if(s.end && (!latest || diffDays(latest, s.end) > 0)) latest = s.end;
+  }));
+  if(earliest && diffDays(earliest, t) > 0){
+    w.push("표준 일정상 " + bizBetween(earliest, t) + "영업일이 부족합니다. (최초 단계 시작일 " + fmt(earliest) + "이 이미 지났습니다)");
+  }
+  if(latest && diffDays(p.eventDate, latest) > 0){
+    w.push("마지막 단계 종료일(" + fmt(latest) + ")이 행사일 이후입니다.");
+  }
+  p.deliverables.forEach(dl => {
+    for(let i = 1; i < dl.stages.length; i++){
+      const prev = dl.stages[i-1], cur = dl.stages[i];
+      if(prev.end && cur.start && diffDays(prev.end, cur.start) <= 0){
+        w.push("「" + dl.name + "」의 「" + prev.name + "」과 「" + cur.name + "」 일정이 겹칩니다. 고정한 날짜를 확인하세요.");
+        break;
+      }
+    }
+  });
+  return w;
+}
+
+/* ────────────────────────────── 렌더링 ────────────────────────────── */
+
+function esc(s){
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c =>
+    ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function ddayPill(dateStr){
+  const d = diffDays(todayStr(), dateStr);
+  const label = d === 0 ? "D-DAY" : (d > 0 ? "D-" + d : "D+" + (-d));
+  const cls = d < 0 ? "p-gray" : d <= 3 ? "p-red" : d <= 7 ? "p-amber" : "p-green";
+  return '<span class="pill ' + cls + '">' + label + "</span>";
+}
+
+function render(){
+  rebuildHolidays();
+  scheduleAll();
+  save(); // 계산된 날짜를 화면과 같은 상태로 저장해 둔다
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === ui.tab));
+  ["home","projects","settings"].forEach(t => {
+    document.getElementById("tab-" + t).hidden = (t !== ui.tab);
+  });
+  if(ui.tab === "home") renderHome();
+  if(ui.tab === "projects") renderProjects();
+  if(ui.tab === "settings") renderSettings();
+}
+
+/* ── 홈: 다가오는 검수/마감 ── */
+function isReviewStage(s){ return s.isAnchor || /검수|컨펌|점검/.test(s.name); }
+
+function renderHome(){
+  const el = document.getElementById("tab-home");
+  if(!state.projects.length){
+    el.innerHTML = '<div class="card"><div class="empty">아직 등록된 프로젝트가 없습니다.<br><br>' +
+      '<button class="btn" onclick="document.getElementById(\'openInput\').click()">텍스트로 프로젝트 넣기</button></div></div>';
+    return;
+  }
+
+  const t = todayStr();
+  const rows = [];
+  state.projects.forEach(p => p.deliverables.forEach(dl => dl.stages.forEach(s => {
+    if(ui.homeFilter === "review" && !isReviewStage(s)) return;
+    if(!s.end) return;
+    rows.push({ p, dl, s, date: s.end });
+  })));
+  rows.sort((a,b) => diffDays(b.date, a.date));
+
+  const upcoming = rows.filter(r => diffDays(t, r.date) >= 0);
+  const overdue = rows.filter(r => diffDays(t, r.date) < 0);
+
+  const warnBlocks = state.projects.map(p => {
+    const w = warningsFor(p);
+    return w.length ? '<div class="warn"><b>' + esc(p.name) + "</b> — " + w.map(esc).join(" / ") + "</div>" : "";
+  }).join("");
+
+  const tableFor = (list, emptyMsg) => {
+    if(!list.length) return '<div class="empty">' + emptyMsg + "</div>";
+    return '<div class="scroll"><table><thead><tr>' +
+      "<th>D-day</th><th>일자</th><th>프로젝트</th><th>산출물</th><th>단계</th><th>기간</th>" +
+      "</tr></thead><tbody>" +
+      list.map(r =>
+        "<tr>" +
+        "<td>" + ddayPill(r.date) + "</td>" +
+        "<td><b>" + fmt(r.date) + "</b></td>" +
+        '<td><a href="#" onclick="openProject(\'' + r.p.id + "');return false;\">" + esc(r.p.name) + "</a>" +
+          ' <span class="sub">· 행사 ' + fmt(r.p.eventDate) + "</span></td>" +
+        "<td>" + esc(r.dl.name) + "</td>" +
+        "<td>" + esc(r.s.name) + (r.s.isAnchor ? ' <span class="pill p-blue">최종</span>' : "") + "</td>" +
+        '<td class="sub">' + fmt(r.s.start) + " → " + fmt(r.s.end) + "</td>" +
+        "</tr>").join("") +
+      "</tbody></table></div>";
+  };
+
+  el.innerHTML =
+    warnBlocks +
+    '<div class="card"><div class="row">' +
+      "<h2 style=\"margin:0\">다가오는 일정</h2>" +
+      '<div class="spacer"></div>' +
+      '<button class="btn sm ' + (ui.homeFilter === "review" ? "" : "ghost") + '" onclick="setFilter(\'review\')">검수·컨펌만</button>' +
+      '<button class="btn sm ' + (ui.homeFilter === "all" ? "" : "ghost") + '" onclick="setFilter(\'all\')">전체 단계</button>' +
+    "</div>" +
+    '<p class="sub">오늘 ' + fmt(t) + " · 프로젝트 " + state.projects.length + "건</p>" +
+    tableFor(upcoming, "다가오는 일정이 없습니다.") +
+    "</div>" +
+    (overdue.length
+      ? '<div class="card"><h2>지난 일정 (' + overdue.length + "건)</h2>" +
+        tableFor(overdue.slice().reverse(), "") + "</div>"
+      : "");
+}
+function setFilter(f){ ui.homeFilter = f; render(); }
+
+/* ── 프로젝트 목록 / 상세 ── */
+function renderProjects(){
+  const el = document.getElementById("tab-projects");
+
+  if(ui.openProject){
+    const p = state.projects.find(x => x.id === ui.openProject);
+    if(p){ el.innerHTML = projectDetailHTML(p); return; }
+    ui.openProject = null;
+  }
+
+  if(!state.projects.length){
+    el.innerHTML = '<div class="card"><div class="empty">등록된 프로젝트가 없습니다.</div></div>';
+    return;
+  }
+
+  const sorted = state.projects.slice().sort((a,b) => diffDays(b.eventDate, a.eventDate));
+  el.innerHTML =
+    '<div class="card"><h2>프로젝트 ' + sorted.length + "건</h2>" +
+    '<div class="scroll"><table><thead><tr>' +
+    "<th>D-day</th><th>프로젝트</th><th>유형</th><th>클라이언트</th><th>행사일</th><th>최종 검수일</th><th>산출물</th><th>상태</th><th></th>" +
+    "</tr></thead><tbody>" +
+    sorted.map(p => {
+      const w = warningsFor(p);
+      return "<tr>" +
+        "<td>" + ddayPill(p.eventDate) + "</td>" +
+        '<td><a href="#" onclick="openProject(\'' + p.id + "');return false;\"><b>" + esc(p.name) + "</b></a></td>" +
+        "<td>" + esc(p.type) + "</td>" +
+        "<td>" + esc(p.client || "—") + "</td>" +
+        "<td>" + fmt(p.eventDate) + "</td>" +
+        "<td><b>" + fmt(projectReviewDate(p)) + "</b></td>" +
+        "<td>" + p.deliverables.length + "개</td>" +
+        "<td>" + (w.length ? '<span class="pill p-red">확인 필요</span>' : '<span class="pill p-green">정상</span>') + "</td>" +
+        '<td><button class="btn sm ghost" onclick="openProject(\'' + p.id + '\')">열기</button></td>' +
+        "</tr>";
+    }).join("") +
+    "</tbody></table></div></div>" +
+    '<div class="card"><button class="btn ghost" onclick="addBlankProject()">＋ 빈 프로젝트 추가</button></div>';
+}
+
+function projectDetailHTML(p){
+  const w = warningsFor(p);
+  return '<div class="card"><div class="row">' +
+      '<button class="btn ghost sm" onclick="closeProject()">← 목록</button>' +
+      '<div class="spacer"></div>' +
+      '<button class="btn danger sm" onclick="deleteProject(\'' + p.id + '\')">프로젝트 삭제</button>' +
+    "</div>" +
+    '<div class="row" style="margin-top:12px;align-items:flex-end">' +
+      '<div class="grow"><label class="f">프로젝트명</label>' +
+        '<input type="text" style="width:100%" value="' + esc(p.name) + '" onchange="editProject(\'' + p.id + "','name',this.value)\"></div>" +
+      '<div><label class="f">유형</label><select onchange="editProject(\'' + p.id + "','type',this.value)\">" +
+        PROJECT_TYPES.map(t => '<option value="' + t + '"' + (t === p.type ? " selected" : "") + ">" + t + "</option>").join("") +
+      "</select></div>" +
+      '<div><label class="f">클라이언트</label>' +
+        '<input type="text" value="' + esc(p.client || "") + '" onchange="editProject(\'' + p.id + "','client',this.value)\"></div>" +
+      '<div><label class="f">행사일 (D-day)</label>' +
+        '<input type="date" value="' + p.eventDate + '" onchange="editProject(\'' + p.id + "','eventDate',this.value)\"></div>" +
+      '<div><label class="f">완료 버퍼 (영업일)</label>' +
+        '<input type="number" min="0" max="30" style="width:80px" value="' + (p.bufferDays || 0) +
+        '" onchange="editProject(\'' + p.id + "','bufferDays',Number(this.value))\"></div>" +
+      '<div><label class="f">최종 검수일 (자동)</label><div style="padding:6px 0"><b>' +
+        fmt(projectReviewDate(p)) + "</b></div></div>" +
+    "</div>" +
+    '<p class="sub">모든 공정은 행사일에서 역산됩니다. 「완료 버퍼」를 올리면 전체 일정이 그만큼 앞당겨집니다. ' +
+      "최종 검수일은 산출물마다 공정 리드타임(인쇄 발주 등)에 따라 다르게 계산됩니다.</p>" +
+    (w.length ? w.map(x => '<div class="warn">' + esc(x) + "</div>").join("") : '<div class="note">표준 일정 안에 들어옵니다.</div>') +
+    "</div>" +
+
+    p.deliverables.map(dl => deliverableHTML(p, dl)).join("") +
+
+    '<div class="card"><div class="row">' +
+      "<label class=\"f\" style=\"margin:0\">산출물 추가</label>" +
+      Object.keys(TEMPLATES).map(k =>
+        '<button class="btn ghost sm" onclick="addDeliverable(\'' + p.id + "','" + k + "')\">＋ " + TEMPLATES[k].label + "</button>").join("") +
+    "</div></div>";
+}
+
+function deliverableHTML(p, dl){
+  const t = todayStr();
+  return '<div class="card"><div class="dl"><div class="dl-head">' +
+      '<strong>' + esc(dl.name) + "</strong>" +
+      '<span class="pill p-gray">' + TEMPLATES[dl.kind].label + "</span>" +
+      '<span class="pill p-blue">최종 검수 ' + fmt(reviewDateOf(dl)) + "</span>" +
+      '<div class="spacer"></div>' +
+      '<button class="btn ghost sm" onclick="renameDeliverable(\'' + p.id + "','" + dl.id + '\')">이름 변경</button>' +
+      '<button class="btn danger sm" onclick="removeDeliverable(\'' + p.id + "','" + dl.id + '\')">삭제</button>' +
+    "</div>" +
+    '<div class="scroll"><table><thead><tr>' +
+      "<th>단계</th><th>소요(영업일)</th><th>시작</th><th>종료</th><th>고정</th><th>담당자 메모</th><th></th>" +
+    "</tr></thead><tbody>" +
+    dl.stages.map((s, i) => {
+      const past = s.start && diffDays(s.start, t) > 0 && diffDays(t, s.end) < 0;
+      const cls = "stagerow" + (s.isAnchor ? " anchor" : "") + (past ? " past" : "");
+      const args = "'" + p.id + "','" + dl.id + "','" + s.id + "'";
+      return '<tr class="' + cls + '">' +
+        "<td>" + esc(s.name) + (s.isAnchor ? ' <span class="pill p-blue">최종 검수</span>' : "") + "</td>" +
+        '<td><input type="number" min="0" max="120" style="width:64px" value="' + s.days +
+          '" onchange="editStage(' + args + ",'days',this.value)\"></td>" +
+        '<td class="sub">' + fmt(s.start) + "</td>" +
+        '<td><input type="date" value="' + (s.end || "") + '"' + (s.locked ? "" : " disabled") +
+          ' onchange="editStage(' + args + ",'end',this.value)\"></td>" +
+        '<td><input type="checkbox"' + (s.locked ? " checked" : "") +
+          ' onchange="editStage(' + args + ",'locked',this.checked)\"></td>" +
+        '<td><input type="text" style="width:100%" placeholder="담당자 / 비고" value="' + esc(s.note || "") +
+          '" onchange="editStage(' + args + ",'note',this.value)\"></td>" +
+        '<td><button class="btn danger sm" onclick="removeStage(' + args + ')">×</button>' +
+          '<button class="btn ghost sm" onclick="addStageAfter(' + args + ')">＋</button></td>' +
+        "</tr>";
+    }).join("") +
+    "</tbody></table></div></div>" +
+    '<p class="sub">「고정」을 켜면 그 단계의 종료일을 직접 지정할 수 있고, 나머지 단계가 그 날짜를 기준으로 다시 계산됩니다.</p>' +
+    "</div>";
+}
+
+/* ── 설정 ── */
+function renderSettings(){
+  const el = document.getElementById("tab-settings");
+  const s = state.settings;
+  el.innerHTML =
+    '<div class="card"><h2>기본 규칙</h2>' +
+      '<div class="field" style="max-width:380px"><label class="f">완료 버퍼 기본값 (영업일)</label>' +
+        '<input type="number" min="0" max="30" value="' + (s.defaultBuffer || 0) + '" onchange="setSetting(\'defaultBuffer\', Math.max(0, Number(this.value)||0))"></div>' +
+      '<p class="sub">모든 공정은 <b>행사일에서 역산</b>됩니다. 마지막 단계(납품·현장 셋업·업로드)가 행사일 며칠 전까지 끝나야 하는지를 정하는 값이며, 0이면 행사 당일에 맞춥니다.<br>' +
+        "최종 검수일은 이 역산의 결과로 산출물마다 따로 계산됩니다 — 인쇄물은 발주 리드타임만큼 더 앞서고, 행사 운영은 셋업·진행을 빼면 행사일 −3영업일이 됩니다. 새로 만드는 프로젝트에만 적용됩니다.</p>" +
+    "</div>" +
+
+    '<div class="card"><h2>AI 분석 (자유 서술 파싱)</h2>' +
+      '<div class="field"><label class="f">Anthropic API 키</label>' +
+        '<input type="password" style="width:100%;max-width:520px" placeholder="sk-ant-..." value="' + esc(s.apiKey) +
+        '" onchange="setSetting(\'apiKey\', this.value.trim())"></div>' +
+      '<div class="field" style="max-width:320px"><label class="f">모델</label><select onchange="setSetting(\'model\', this.value)">' +
+        ["claude-opus-5","claude-sonnet-5","claude-haiku-4-5"].map(m =>
+          '<option value="' + m + '"' + (m === s.model ? " selected" : "") + ">" + m + "</option>").join("") +
+      "</select></div>" +
+      '<p class="sub">키는 이 브라우저에만 저장되며 Anthropic API 외 어디로도 전송되지 않습니다. 키가 없어도 「양식으로 분석」은 그대로 동작합니다.</p>' +
+    "</div>" +
+
+    '<div class="card"><h2>회사 휴무일</h2>' +
+      '<p class="sub">국가 공휴일(2026–2027, 대체공휴일 포함)은 이미 반영되어 있습니다. 창립기념일·워크숍 등 회사 자체 휴무일만 한 줄에 하나씩 <code>YYYY-MM-DD</code> 형식으로 적으세요.</p>' +
+      '<textarea rows="6" onchange="setHolidays(this.value)">' + esc((s.customHolidays || []).join("\n")) + "</textarea>" +
+    "</div>" +
+
+    '<div class="card"><h2>공정 기본 소요일</h2>' +
+      '<p class="sub">새로 만드는 산출물에 적용되는 기본값입니다. 기존 프로젝트는 바뀌지 않습니다.</p>' +
+      Object.keys(TEMPLATES).map(k =>
+        "<h3>" + TEMPLATES[k].label + "</h3><div class=\"scroll\"><table><tbody>" +
+        TEMPLATES[k].stages.map(([name, days]) => {
+          const cur = (s.stageDays[k] && s.stageDays[k][name] != null) ? s.stageDays[k][name] : days;
+          return "<tr><td>" + esc(name) + "</td><td style=\"width:110px\">" +
+            '<input type="number" min="0" max="120" style="width:70px" value="' + cur +
+            '" onchange="setStageDays(\'' + k + "','" + name.replace(/'/g,"\\'") + "', Number(this.value))\"> 일</td></tr>";
+        }).join("") + "</tbody></table></div>").join("") +
+    "</div>" +
+
+    '<div class="card"><h2>데이터</h2><div class="row">' +
+      '<button class="btn ghost" onclick="exportJSON()">JSON 내보내기</button>' +
+      '<button class="btn ghost" onclick="document.getElementById(\'importFile\').click()">JSON 불러오기</button>' +
+      '<input type="file" id="importFile" accept="application/json" hidden onchange="importJSON(this)">' +
+      '<div class="spacer"></div>' +
+      '<button class="btn danger" onclick="wipeAll()">전체 삭제</button>' +
+    "</div>" +
+    '<p class="sub">모든 데이터는 이 브라우저에만 저장됩니다. 다른 PC로 옮기거나 백업하려면 내보내기를 쓰세요.</p></div>';
+}
+
+/* ────────────────────────────── 편집 액션 ────────────────────────────── */
+
+function findProject(pid){ return state.projects.find(p => p.id === pid); }
+function findStage(pid, did, sid){
+  const p = findProject(pid); if(!p) return {};
+  const dl = p.deliverables.find(d => d.id === did); if(!dl) return {p};
+  return { p, dl, s: dl.stages.find(x => x.id === sid) };
+}
+
+function openProject(id){ ui.openProject = id; ui.tab = "projects"; render(); window.scrollTo(0,0); }
+function closeProject(){ ui.openProject = null; render(); }
+
+function editProject(pid, key, val){
+  const p = findProject(pid); if(!p) return;
+  if(key === "eventDate" && !/^\d{4}-\d{2}-\d{2}$/.test(val)) return render();
+  if(key === "bufferDays") val = Math.max(0, Number(val) || 0);
+  p[key] = val;
+  save(); render();
+}
+function deleteProject(pid){
+  const p = findProject(pid); if(!p) return;
+  if(!confirm("「" + p.name + "」 프로젝트를 삭제합니다. 되돌릴 수 없습니다.")) return;
+  state.projects = state.projects.filter(x => x.id !== pid);
+  ui.openProject = null; save(); render();
+}
+function addBlankProject(){
+  const p = {
+    id: uid(), name: "새 프로젝트", type: "지역행사", client: "",
+    eventDate: addBiz(todayStr(), 30),
+    bufferDays: state.settings.defaultBuffer || 0,
+    deliverables: []
+  };
+  TYPE_DEFAULT_KINDS[p.type].forEach(k => p.deliverables.push(makeDeliverable(null, k)));
+  state.projects.push(p); save(); openProject(p.id);
+}
+
+function addDeliverable(pid, kind){
+  const p = findProject(pid); if(!p) return;
+  p.deliverables.push(makeDeliverable(null, kind));
+  save(); render();
+}
+function removeDeliverable(pid, did){
+  const p = findProject(pid); if(!p) return;
+  p.deliverables = p.deliverables.filter(d => d.id !== did);
+  save(); render();
+}
+function renameDeliverable(pid, did){
+  const p = findProject(pid); if(!p) return;
+  const dl = p.deliverables.find(d => d.id === did); if(!dl) return;
+  const v = prompt("산출물 이름", dl.name);
+  if(v != null && v.trim()){ dl.name = v.trim(); save(); render(); }
+}
+
+function editStage(pid, did, sid, key, val){
+  const { p, s } = findStage(pid, did, sid);
+  if(!p || !s) return;
+  if(key === "days") s.days = Math.max(0, Number(val) || 0);
+  else if(key === "locked"){
+    s.locked = !!val;
+    if(s.locked && !s.end) s.end = chainEndOf(p);
+  }
+  else if(key === "end"){ if(val) s.end = val; }
+  else s[key] = val;
+  save(); render();
+}
+function removeStage(pid, did, sid){
+  const { dl } = findStage(pid, did, sid);
+  if(!dl) return;
+  if(dl.stages.length <= 1) return alert("단계는 최소 1개 필요합니다.");
+  dl.stages = dl.stages.filter(x => x.id !== sid);
+  save(); render();
+}
+function addStageAfter(pid, did, sid){
+  const { dl } = findStage(pid, did, sid);
+  if(!dl) return;
+  const name = prompt("추가할 단계 이름", "추가 작업");
+  if(!name) return;
+  const i = dl.stages.findIndex(x => x.id === sid);
+  dl.stages.splice(i+1, 0, { id:uid(), name:name.trim(), days:1, isAnchor:false, start:null, end:null, locked:false, note:"" });
+  save(); render();
+}
+
+function setSetting(key, val){ state.settings[key] = val; save(); render(); }
+function setHolidays(text){
+  state.settings.customHolidays = text.split(/\r?\n/).map(x => x.trim())
+    .filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x));
+  save(); render();
+}
+function setStageDays(kind, name, days){
+  state.settings.stageDays[kind] = state.settings.stageDays[kind] || {};
+  state.settings.stageDays[kind][name] = Math.max(0, days || 0);
+  save();
+}
+
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "프로젝트일정_" + todayStr() + ".json";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function importJSON(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const s = JSON.parse(r.result);
+      if(!s || !Array.isArray(s.projects)) throw new Error("형식이 올바르지 않습니다.");
+      if(!confirm("현재 데이터를 불러온 파일로 교체합니다. 계속할까요?")) return;
+      state = s;
+      state.settings = Object.assign(structuredClone(DEFAULT_STATE.settings), state.settings || {});
+      save(); render();
+    }catch(e){ alert("불러오기 실패: " + e.message); }
+    input.value = "";
+  };
+  r.readAsText(file);
+}
+function wipeAll(){
+  if(!confirm("모든 프로젝트와 설정을 삭제합니다. 되돌릴 수 없습니다.")) return;
+  state = structuredClone(DEFAULT_STATE);
+  save(); render();
+}
+
+/* ────────────────────────────── 입력 · 파싱 ────────────────────────────── */
+
+const modal = document.getElementById("inputModal");
+document.getElementById("openInput").onclick = () => {
+  modal.classList.remove("hidden");
+  document.getElementById("parseResult").innerHTML = "";
+  document.getElementById("parseStatus").innerHTML = "";
+};
+document.getElementById("closeInput").onclick = () => modal.classList.add("hidden");
+modal.addEventListener("click", e => { if(e.target === modal) modal.classList.add("hidden"); });
+
+function status(html){ document.getElementById("parseStatus").innerHTML = html; }
+
+/** 양식 기반 파서: 프로젝트명 | 유형 | 행사일 | 산출물, 산출물 */
+function parseStructured(text){
+  const out = [];
+  text.split(/\r?\n/).forEach(line => {
+    const t = line.trim();
+    if(!t || t.startsWith("#")) return;
+    const parts = t.split("|").map(x => x.trim());
+    if(parts.length < 3) return;
+    const [name, type, dateRaw] = parts;
+    const m = (dateRaw || "").match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
+    if(!m) return;
+    const eventDate = m[1] + "-" + String(m[2]).padStart(2,"0") + "-" + String(m[3]).padStart(2,"0");
+    const names = (parts[3] || "").split(/[,、·]/).map(x => x.trim()).filter(Boolean);
+    out.push({
+      name: name || "이름 없음",
+      type: PROJECT_TYPES.includes(type) ? type : "지역행사",
+      client: parts[4] || "",
+      eventDate,
+      deliverables: names.length
+        ? names.map(n => ({ name:n, kind: guessKind(n) }))
+        : TYPE_DEFAULT_KINDS[PROJECT_TYPES.includes(type) ? type : "지역행사"]
+            .map(k => ({ name: TEMPLATES[k].label, kind: k }))
+    });
+  });
+  return out;
+}
+
+const PARSE_SCHEMA = {
+  type: "object",
+  properties: {
+    projects: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          name:      { type:"string", description:"프로젝트/행사 이름" },
+          type:      { type:"string", enum: PROJECT_TYPES },
+          client:    { type:"string", description:"클라이언트/발주처. 없으면 빈 문자열" },
+          eventDate: { type:"string", description:"행사일 또는 최종 납품일. YYYY-MM-DD" },
+          deliverables: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                name: { type:"string", description:"산출물 이름 (예: 현수막, 홍보영상)" },
+                kind: { type:"string", enum:["print","video","ad","event"],
+                        description:"print=인쇄물, video=영상, ad=온라인/SNS 광고, event=행사 운영" }
+              },
+              required: ["name","kind"],
+              additionalProperties: false
+            }
+          }
+        },
+        required: ["name","type","client","eventDate","deliverables"],
+        additionalProperties: false
+      }
+    }
+  },
+  required: ["projects"],
+  additionalProperties: false
+};
+
+async function parseWithAI(text){
+  const key = state.settings.apiKey;
+  if(!key) throw new Error("설정 탭에서 Anthropic API 키를 먼저 입력하세요. (또는 「양식으로 분석」을 쓰세요)");
+
+  const sys =
+    "당신은 한국의 종합광고기획사 업무를 정리하는 조수입니다. 사용자가 자유롭게 적은 메모에서 프로젝트를 추출해 JSON으로 반환하세요.\n" +
+    "오늘 날짜는 " + todayStr() + " 입니다. '10월', '다음 달', '이번 분기' 같은 표현은 오늘 기준으로 해석하고, " +
+    "연도가 없으면 오늘 이후 가장 가까운 해당 날짜로 잡으세요. 날짜가 '10월 초/중순/말'처럼 모호하면 각각 5일/15일/25일로 잡으세요.\n" +
+    "type은 공연·전시·축제 등 문화 사업이면 '문화기획', 지자체 행사·기념식·군민의날 등이면 '지역행사', " +
+    "온라인 광고·SNS·브랜딩 캠페인이면 '마케팅 캠페인'으로 정하세요.\n" +
+    "deliverables는 메모에 언급된 제작물만 넣되, 하나도 언급되지 않았으면 프로젝트 유형에 맞는 것을 1~2개 추정해 넣으세요.\n" +
+    "메모에 없는 프로젝트를 지어내지 마세요.";
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model: state.settings.model,
+      max_tokens: 8000,
+      system: sys,
+      messages: [{ role:"user", content: text }],
+      output_config: {
+        effort: "medium",
+        format: { type: "json_schema", schema: PARSE_SCHEMA }
+      }
+    })
+  });
+
+  if(!res.ok){
+    let msg = res.status + " " + res.statusText;
+    try{ const e = await res.json(); if(e.error && e.error.message) msg = e.error.message; }catch(_){}
+    if(res.status === 401) msg = "API 키가 올바르지 않습니다. (" + msg + ")";
+    throw new Error(msg);
+  }
+
+  const data = await res.json();
+  if(data.stop_reason === "refusal") throw new Error("모델이 요청을 거절했습니다. 입력을 바꿔 다시 시도하세요.");
+  const block = (data.content || []).find(b => b.type === "text");
+  if(!block) throw new Error("응답에서 결과를 찾지 못했습니다.");
+  const parsed = JSON.parse(block.text);
+  return parsed.projects || [];
+}
+
+document.getElementById("parseRule").onclick = () => {
+  const text = document.getElementById("rawText").value;
+  const list = parseStructured(text);
+  if(!list.length){
+    status('<div class="warn">양식에 맞는 줄을 찾지 못했습니다. <code>프로젝트명 | 유형 | 행사일 | 산출물</code> 형식인지 확인하세요.</div>');
+    document.getElementById("parseResult").innerHTML = "";
+    return;
+  }
+  status("");
+  showPending(list);
+};
+
+document.getElementById("parseAI").onclick = async () => {
+  const text = document.getElementById("rawText").value.trim();
+  if(!text) return status('<div class="warn">먼저 내용을 입력하세요.</div>');
+  const btn = document.getElementById("parseAI");
+  btn.disabled = true;
+  status('<div class="note">분석 중입니다… (' + esc(state.settings.model) + ")</div>");
+  document.getElementById("parseResult").innerHTML = "";
+  try{
+    const list = await parseWithAI(text);
+    if(!list.length){ status('<div class="warn">프로젝트를 찾지 못했습니다.</div>'); return; }
+    status("");
+    showPending(list);
+  }catch(e){
+    const hint = /Failed to fetch|NetworkError/i.test(e.message)
+      ? "<br><span class=\"sub\">브라우저가 요청을 차단했을 수 있습니다. 키를 확인하거나 「양식으로 분석」을 사용하세요.</span>"
+      : "";
+    status('<div class="warn">분석 실패: ' + esc(e.message) + hint + "</div>");
+  }finally{
+    btn.disabled = false;
+  }
+};
+
+/** 파싱 결과 검토 화면 */
+function showPending(list){
+  ui.pending = list.map(p => Object.assign({ _use:true }, p));
+  const el = document.getElementById("parseResult");
+  el.innerHTML =
+    "<h3>분석 결과 " + list.length + "건 — 확인 후 확정하세요</h3>" +
+    '<div class="scroll"><table><thead><tr>' +
+      "<th>추가</th><th>프로젝트명</th><th>유형</th><th>클라이언트</th><th>행사일</th><th>산출물</th>" +
+    "</tr></thead><tbody>" +
+    ui.pending.map((p, i) =>
+      "<tr>" +
+      '<td><input type="checkbox" checked onchange="ui.pending[' + i + ']._use=this.checked"></td>' +
+      '<td><input type="text" value="' + esc(p.name) + '" onchange="ui.pending[' + i + '].name=this.value"></td>' +
+      "<td><select onchange=\"ui.pending[" + i + '].type=this.value">' +
+        PROJECT_TYPES.map(t => '<option' + (t === p.type ? " selected" : "") + ">" + t + "</option>").join("") +
+      "</select></td>" +
+      '<td><input type="text" style="width:110px" value="' + esc(p.client || "") + '" onchange="ui.pending[' + i + '].client=this.value"></td>' +
+      '<td><input type="date" value="' + esc(p.eventDate) + '" onchange="ui.pending[' + i + '].eventDate=this.value"></td>' +
+      '<td class="sub">' + (p.deliverables || []).map(d => esc(d.name) + "(" + TEMPLATES[d.kind].label + ")").join(", ") + "</td>" +
+      "</tr>").join("") +
+    "</tbody></table></div>" +
+    '<div class="row" style="margin-top:12px">' +
+      '<button class="btn" onclick="commitPending()">확정해서 추가</button>' +
+      '<span class="sub">확정 후에도 각 프로젝트 화면에서 단계·날짜를 자유롭게 고칠 수 있습니다.</span>' +
+    "</div>";
+}
+
+function commitPending(){
+  const list = (ui.pending || []).filter(p => p._use);
+  if(!list.length) return alert("추가할 프로젝트를 하나 이상 선택하세요.");
+  let bad = 0;
+  list.forEach(p => {
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(p.eventDate || "")){ bad++; return; }
+    const proj = {
+      id: uid(),
+      name: p.name || "이름 없음",
+      type: PROJECT_TYPES.includes(p.type) ? p.type : "지역행사",
+      client: p.client || "",
+      eventDate: p.eventDate,
+      bufferDays: state.settings.defaultBuffer || 0,
+      deliverables: []
+    };
+    const dls = (p.deliverables && p.deliverables.length)
+      ? p.deliverables
+      : TYPE_DEFAULT_KINDS[proj.type].map(k => ({ name: TEMPLATES[k].label, kind: k }));
+    dls.forEach(d => proj.deliverables.push(makeDeliverable(d.name, TEMPLATES[d.kind] ? d.kind : guessKind(d.name))));
+    state.projects.push(proj);
+  });
+  ui.pending = null;
+  save();
+  modal.classList.add("hidden");
+  ui.tab = "home"; render();
+  if(bad) alert(bad + "건은 행사일 형식이 올바르지 않아 건너뛰었습니다.");
+}
+
+/* ────────────────────────────── 부팅 ────────────────────────────── */
+
+document.querySelectorAll("nav button").forEach(b => {
+  b.onclick = () => { ui.tab = b.dataset.tab; ui.openProject = null; render(); };
+});
+
+window.openProject = openProject;
+window.closeProject = closeProject;
+window.editProject = editProject;
+window.deleteProject = deleteProject;
+window.addBlankProject = addBlankProject;
+window.addDeliverable = addDeliverable;
+window.removeDeliverable = removeDeliverable;
+window.renameDeliverable = renameDeliverable;
+window.editStage = editStage;
+window.removeStage = removeStage;
+window.addStageAfter = addStageAfter;
+window.setSetting = setSetting;
+window.setHolidays = setHolidays;
+window.setStageDays = setStageDays;
+window.exportJSON = exportJSON;
+window.importJSON = importJSON;
+window.wipeAll = wipeAll;
+window.setFilter = setFilter;
+window.commitPending = commitPending;
+window.ui = ui;
+
+render();
+</script>
+</body>
+</html>
