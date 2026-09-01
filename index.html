@@ -5,87 +5,133 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>프로젝트 일정 관리</title>
 <style>
+  /* 팔레트는 흑·적·백 3색으로 축소한다.
+     빨강은 브랜드 장식이 아니라 "지금 조치가 필요하다"는 신호로만 쓴다.
+     그 밖의 모든 위계는 검정의 농도와 괘선의 굵기로만 만든다. */
   :root{
-    --bg:#f6f7f9; --card:#fff; --line:#e3e6ea; --ink:#1b1f24; --muted:#6b7280;
-    --accent:#2f5fd0; --accent-soft:#eaf0fd;
-    --red:#d92b2b; --red-soft:#fdecec;
-    --amber:#b26a00; --amber-soft:#fdf3e2;
-    --green:#1f7a4d; --green-soft:#e8f6ef;
-    --radius:10px;
+    --paper:#f2f0ec;          /* 지면 */
+    --card:#ffffff;
+    --ink:#0e0e0e;            /* 본문·구조 */
+    --ink-2:#4a4845;          /* 보조 */
+    --ink-3:#8b8781;          /* 최약 */
+    --rule:#0e0e0e;           /* 강한 괘선 */
+    --rule-soft:#d9d5cf;      /* 약한 괘선 */
+    --red:#c8102e;            /* 유일한 액센트 — 긴급/경고 전용 */
+    --red-wash:#faeced;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,-apple-system,sans-serif;
-    font-size:14px;line-height:1.55}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Helvetica Neue",Helvetica,Arial,"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
   button,input,select,textarea{font:inherit;color:inherit}
-  a{color:var(--accent)}
+  a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--ink);padding-bottom:1px}
+  a:hover{color:var(--red);border-color:var(--red)}
 
-  header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
-  .hwrap{max-width:1120px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-  .brand{font-weight:700;font-size:16px;margin-right:4px}
-  nav{display:flex;gap:4px}
-  nav button{background:none;border:0;padding:7px 14px;border-radius:8px;cursor:pointer;color:var(--muted);font-weight:600}
-  nav button.on{background:var(--accent-soft);color:var(--accent)}
+  /* 라벨: 자간을 넓힌 소형 대문자. 20세기 초 인쇄물의 캡션 조판. */
+  .label{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2)}
+
+  header{background:var(--card);border-bottom:3px solid var(--rule);position:sticky;top:0;z-index:20}
+  .hwrap{max-width:1140px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;margin-right:2px}
+  .emblem{width:22px;height:22px;background:var(--ink);position:relative;flex:none}
+  .emblem::after{content:"";position:absolute;left:6px;top:6px;width:10px;height:10px;background:var(--red)}
+  .brand-text{line-height:1.1}
+  .brand-text b{display:block;font-size:15px;font-weight:800;letter-spacing:-.01em}
+  .brand-text span{display:block;font-size:9.5px;font-weight:700;letter-spacing:.22em;color:var(--ink-3);margin-top:2px}
+  nav{display:flex;gap:0;border-left:1px solid var(--rule-soft)}
+  nav button{background:none;border:0;border-right:1px solid var(--rule-soft);padding:7px 18px;cursor:pointer;
+    color:var(--ink-3);font-weight:700;font-size:12px;letter-spacing:.1em}
+  nav button.on{color:var(--ink);box-shadow:inset 0 -3px 0 var(--ink)}
+  nav button:hover{color:var(--ink)}
   .spacer{flex:1}
 
-  main{max-width:1120px;margin:0 auto;padding:22px 20px 80px}
-  .btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 15px;cursor:pointer;font-weight:600}
-  .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
-  .btn.sm{padding:5px 10px;font-size:12.5px;font-weight:600}
-  .btn.danger{background:#fff;color:var(--red);border:1px solid #f0c9c9}
-  .btn:disabled{opacity:.5;cursor:not-allowed}
+  main{max-width:1140px;margin:0 auto;padding:26px 24px 90px}
 
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:14px}
-  .card h2{margin:0 0 4px;font-size:16px}
-  .card h3{margin:0 0 10px;font-size:14px;color:var(--muted);font-weight:700}
-  .sub{color:var(--muted);font-size:12.5px}
+  /* 버튼: 각지고 평평하게. 기본은 검정, 위험만 빨강. */
+  .btn{background:var(--ink);color:#fff;border:1px solid var(--ink);border-radius:0;
+    padding:8px 17px;cursor:pointer;font-weight:700;font-size:12.5px;letter-spacing:.04em}
+  .btn:hover{background:#000}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+  .btn.ghost:hover{background:var(--ink);color:#fff}
+  .btn.sm{padding:4px 10px;font-size:11.5px}
+  .btn.danger{background:transparent;color:var(--red);border:1px solid var(--red)}
+  .btn.danger:hover{background:var(--red);color:#fff}
+  .btn:disabled{opacity:.35;cursor:not-allowed}
+
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:0;padding:18px 20px;margin-bottom:16px}
+  .card h2{margin:0 0 10px;font-size:15px;font-weight:800;letter-spacing:-.01em;
+    padding-bottom:8px;border-bottom:2px solid var(--rule)}
+  .card h3{margin:16px 0 8px;font-size:10.5px;font-weight:700;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-2);border-bottom:1px solid var(--rule-soft);padding-bottom:5px}
+  .sub{color:var(--ink-3);font-size:12px}
   .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .grow{flex:1;min-width:0}
 
-  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
-  .p-red{background:var(--red-soft);color:var(--red)}
-  .p-amber{background:var(--amber-soft);color:var(--amber)}
-  .p-green{background:var(--green-soft);color:var(--green)}
-  .p-gray{background:#eef0f3;color:var(--muted)}
-  .p-blue{background:var(--accent-soft);color:var(--accent)}
+  /* 배지: 빨강은 채움(긴급), 검정은 테두리(주의), 나머지는 흐린 회색. */
+  .pill{display:inline-block;padding:2px 8px;border-radius:0;font-size:10.5px;font-weight:700;
+    letter-spacing:.08em;white-space:nowrap;border:1px solid transparent;text-transform:uppercase}
+  .p-red{background:var(--red);color:#fff;border-color:var(--red)}
+  .p-ink{background:transparent;color:var(--ink);border-color:var(--ink)}
+  .p-quiet{background:transparent;color:var(--ink-3);border-color:var(--rule-soft)}
+  .p-gray{background:transparent;color:var(--ink-3);border-color:var(--rule-soft)}
 
   table{width:100%;border-collapse:collapse}
-  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
-  th{font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap}
+  th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--rule-soft);vertical-align:middle}
+  th{font-size:10px;color:var(--ink-2);font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    white-space:nowrap;border-bottom:2px solid var(--rule);padding-bottom:6px}
+  tbody tr:hover td{background:#faf9f7}
   .scroll{overflow-x:auto}
+
   input[type=text],input[type=date],input[type=number],input[type=password],select,textarea{
-    border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff;max-width:100%}
-  input[type=date]{min-width:132px}
-  input[disabled]{background:#f4f5f7;color:var(--muted)}
+    border:1px solid var(--rule-soft);border-radius:0;padding:6px 9px;background:#fff;max-width:100%}
+  input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ink)}
+  input[type=date]{min-width:136px}
+  input[disabled]{background:#f4f2ef;color:var(--ink-3);border-style:dashed}
   textarea{width:100%;resize:vertical}
-  label.f{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:4px}
-  .field{margin-bottom:12px}
+  label.f{display:block;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-2);margin-bottom:5px}
+  .field{margin-bottom:14px}
 
-  .warn{border-left:3px solid var(--red);background:var(--red-soft);color:#7d1d1d;
-    padding:8px 12px;border-radius:6px;margin:8px 0;font-size:13px}
-  .note{border-left:3px solid var(--accent);background:var(--accent-soft);color:#1e3f8f;
-    padding:8px 12px;border-radius:6px;margin:8px 0;font-size:13px}
+  /* 경고만이 빨강을 쓴다. 정보는 검정 괘선으로. */
+  .warn{border:1px solid var(--red);border-left-width:5px;background:var(--red-wash);color:var(--ink);
+    padding:9px 13px;margin:9px 0;font-size:13px}
+  .note{border:1px solid var(--rule-soft);border-left:5px solid var(--ink);background:#fff;color:var(--ink-2);
+    padding:9px 13px;margin:9px 0;font-size:13px}
 
-  .empty{text-align:center;color:var(--muted);padding:44px 10px}
+  .empty{text-align:center;color:var(--ink-3);padding:52px 10px;letter-spacing:.02em}
 
-  .dl{border:1px solid var(--line);border-radius:8px;margin-bottom:12px;overflow:hidden}
-  .dl-head{background:#fafbfc;padding:8px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
-  .dl-head strong{font-size:13.5px}
-  .stagerow.past td{background:#fff8f8}
-  .stagerow.anchor td{background:var(--accent-soft)}
+  .dl{border:1px solid var(--rule);border-radius:0;margin-bottom:14px}
+  .dl-head{background:var(--ink);color:#fff;padding:9px 13px;display:flex;align-items:center;gap:10px}
+  .dl-head strong{font-size:13px;font-weight:700;letter-spacing:.02em}
+  .dl-head .pill{border-color:rgba(255,255,255,.45);color:#fff}
+  .dl-head .p-red{background:var(--red);border-color:var(--red)}
+  .dl-head .btn.ghost{color:#fff;border-color:rgba(255,255,255,.5)}
+  .dl-head .btn.ghost:hover{background:#fff;color:var(--ink)}
+  .dl-head .btn.danger{color:#fff;border-color:var(--red);background:var(--red)}
 
-  .modal{position:fixed;inset:0;background:rgba(20,24,30,.45);display:flex;align-items:flex-start;
-    justify-content:center;padding:40px 16px;overflow:auto;z-index:50}
-  .modal .card{max-width:860px;width:100%;margin:0}
+  .stagerow.past td{background:var(--red-wash)}
+  .stagerow.anchor td{background:#f2f0ec;font-weight:700;
+    border-top:1px solid var(--ink);border-bottom:1px solid var(--ink)}
+
+  .modal{position:fixed;inset:0;background:rgba(14,14,14,.72);display:flex;align-items:flex-start;
+    justify-content:center;padding:44px 16px;overflow:auto;z-index:50}
+  .modal .card{max-width:880px;width:100%;margin:0;border-width:2px}
   .modal.hidden{display:none}
-  code{background:#eef0f3;padding:1px 5px;border-radius:4px;font-size:12.5px}
+  code{background:var(--paper);border:1px solid var(--rule-soft);padding:1px 5px;border-radius:0;
+    font-family:"SF Mono",Consolas,monospace;font-size:12px}
 </style>
 </head>
 <body>
 
 <header>
   <div class="hwrap">
-    <div class="brand">프로젝트 일정 관리</div>
+    <div class="brand">
+      <div class="emblem"></div>
+      <div class="brand-text">
+        <b>프로젝트 일정 관리</b>
+        <span>PRODUCTION SCHEDULE</span>
+      </div>
+    </div>
     <nav>
       <button data-tab="home" class="on">홈</button>
       <button data-tab="projects">프로젝트</button>
@@ -400,7 +446,8 @@ function esc(s){
 function ddayPill(dateStr){
   const d = diffDays(todayStr(), dateStr);
   const label = d === 0 ? "D-DAY" : (d > 0 ? "D-" + d : "D+" + (-d));
-  const cls = d < 0 ? "p-gray" : d <= 3 ? "p-red" : d <= 7 ? "p-amber" : "p-green";
+  // 빨강은 D-3 이내에만. 그 밖은 검정 테두리(주의)와 흐린 회색(여유)으로 구분한다.
+  const cls = d < 0 ? "p-quiet" : d <= 3 ? "p-red" : d <= 7 ? "p-ink" : "p-quiet";
   return '<span class="pill ' + cls + '">' + label + "</span>";
 }
 
@@ -457,7 +504,7 @@ function renderHome(){
         '<td><a href="#" onclick="openProject(\'' + r.p.id + "');return false;\">" + esc(r.p.name) + "</a>" +
           ' <span class="sub">· 행사 ' + fmt(r.p.eventDate) + "</span></td>" +
         "<td>" + esc(r.dl.name) + "</td>" +
-        "<td>" + esc(r.s.name) + (r.s.isAnchor ? ' <span class="pill p-blue">최종</span>' : "") + "</td>" +
+        "<td>" + esc(r.s.name) + (r.s.isAnchor ? ' <span class="pill p-ink">최종</span>' : "") + "</td>" +
         '<td class="sub">' + fmt(r.s.start) + " → " + fmt(r.s.end) + "</td>" +
         "</tr>").join("") +
       "</tbody></table></div>";
@@ -512,7 +559,7 @@ function renderProjects(){
         "<td>" + fmt(p.eventDate) + "</td>" +
         "<td><b>" + fmt(projectReviewDate(p)) + "</b></td>" +
         "<td>" + p.deliverables.length + "개</td>" +
-        "<td>" + (w.length ? '<span class="pill p-red">확인 필요</span>' : '<span class="pill p-green">정상</span>') + "</td>" +
+        "<td>" + (w.length ? '<span class="pill p-red">확인 필요</span>' : '<span class="pill p-quiet">정상</span>') + "</td>" +
         '<td><button class="btn sm ghost" onclick="openProject(\'' + p.id + '\')">열기</button></td>' +
         "</tr>";
     }).join("") +
@@ -562,7 +609,7 @@ function deliverableHTML(p, dl){
   return '<div class="card"><div class="dl"><div class="dl-head">' +
       '<strong>' + esc(dl.name) + "</strong>" +
       '<span class="pill p-gray">' + TEMPLATES[dl.kind].label + "</span>" +
-      '<span class="pill p-blue">최종 검수 ' + fmt(reviewDateOf(dl)) + "</span>" +
+      '<span class="pill">최종 검수 ' + fmt(reviewDateOf(dl)) + "</span>" +
       '<div class="spacer"></div>' +
       '<button class="btn ghost sm" onclick="renameDeliverable(\'' + p.id + "','" + dl.id + '\')">이름 변경</button>' +
       '<button class="btn danger sm" onclick="removeDeliverable(\'' + p.id + "','" + dl.id + '\')">삭제</button>' +
@@ -575,7 +622,7 @@ function deliverableHTML(p, dl){
       const cls = "stagerow" + (s.isAnchor ? " anchor" : "") + (past ? " past" : "");
       const args = "'" + p.id + "','" + dl.id + "','" + s.id + "'";
       return '<tr class="' + cls + '">' +
-        "<td>" + esc(s.name) + (s.isAnchor ? ' <span class="pill p-blue">최종 검수</span>' : "") + "</td>" +
+        "<td>" + esc(s.name) + (s.isAnchor ? ' <span class="pill p-ink">최종 검수</span>' : "") + "</td>" +
         '<td><input type="number" min="0" max="120" style="width:64px" value="' + s.days +
           '" onchange="editStage(' + args + ",'days',this.value)\"></td>" +
         '<td class="sub">' + fmt(s.start) + "</td>" +

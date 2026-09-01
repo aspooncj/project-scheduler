@@ -13,6 +13,7 @@ desktop.ini
 *.swp
 *~
 
-# 도구
+# 도구 · 에이전트 상태 (로컬 경로·세션 메타데이터가 들어감)
 node_modules/
 .claude/
+.omc/
